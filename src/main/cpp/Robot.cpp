@@ -10,6 +10,10 @@
 #include <frc/TimedRobot.h>
 #include <frc/drive/MecanumDrive.h>
 #include <studica/TitanQuad.h>
+#include <frc/smartdashboard/SmartDashboard.h>
+#include "networktables/NetworkTable.h"
+#include "networktables/NetworkTableEntry.h"
+#include "networktables/NetworkTableInstance.h"
 
 /**
  * This is a demo program showing how to use Mecanum control with the
@@ -19,10 +23,21 @@
 class Robot : public frc::TimedRobot {
  public:
   void RobotInit() override {
+    //We need to use Network Tables as Photon cannot build for the Pi.
+    auto inst = nt::NetworkTableInstance::GetDefault();
+    auto table = inst.GetTable("photonvision/usbCam");
+    xEntry = table->GetEntry("taregtPixelsX");
+    yEntry = table->GetEntry("targetPixelsY");
     // Invert the left side motors. You may need to change or remove this to
     // match your robot.
     m_frontLeft.SetInverted(true);
     m_rearLeft.SetInverted(true);
+  }
+
+  void RobotPeriodic(){
+    frc::SmartDashboard::PutNumber("x",xEntry.GetDouble(0.0));
+    
+
   }
 
   void TeleopInit() override {
@@ -53,6 +68,9 @@ class Robot : public frc::TimedRobot {
                                  m_rearRight};
 
   frc::Joystick m_stick{kJoystickChannel};
+  nt::NetworkTableEntry xEntry;
+  nt::NetworkTableEntry yEntry;
+
 };
 
 #ifndef RUNNING_FRC_TESTS
