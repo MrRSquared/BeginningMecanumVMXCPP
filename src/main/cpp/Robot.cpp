@@ -24,10 +24,12 @@ class Robot : public frc::TimedRobot {
  public:
   void RobotInit() override {
     //We need to use Network Tables as Photon cannot build for the Pi.
-    auto inst = nt::NetworkTableInstance::GetDefault();
+    /**auto inst = nt::NetworkTableInstance::GetDefault();
     auto table = inst.GetTable("photonvision/usbCam");
     xEntry = table->GetEntry("taregtPixelsX");
-    yEntry = table->GetEntry("targetPixelsY");
+    yEntry = table->GetEntry("targetPixelsY");*/
+    
+    
     // Invert the left side motors. You may need to change or remove this to
     // match your robot.
     m_frontLeft.SetInverted(true);
@@ -35,7 +37,7 @@ class Robot : public frc::TimedRobot {
   }
 
   void RobotPeriodic(){
-    frc::SmartDashboard::PutNumber("x",xEntry.GetDouble(0.0));
+    
     
 
   }
@@ -43,12 +45,34 @@ class Robot : public frc::TimedRobot {
   void TeleopInit() override {
     //This is a wonderful debug tool. Print to the console.
     wpi::outs() << "Entering Teleop...";
+    //frc::SmartDashboard::PutNumber("x",xEntry.GetDouble(0.0));
+    
   }
 
   void TeleopPeriodic() override {
     /* Use the joystick X axis for lateral movement, Y axis for forward
      * movement, and Z axis for rotation.
      */
+
+    //Using shared pointers rather than constructing the table explicitly seemed to work here.
+    //The Limelight example used the shared pointer in teleop, so I put it here. It is possible that some or all of this could go into robotInit.
+    std::shared_ptr<NetworkTable> table = NetworkTable::GetTable("photonvision/usbCam");
+    //Create the variable to hold the table using a pointer. The pointer links to a specific method
+    targetX = table->GetEntry("targetPixelsX");
+    //Next we update the data in the smart dashboard
+    frc::SmartDashboard::PutNumber("tx",targetX.GetDouble(0.0));
+    //I also wanted to see if we could use the pointer on multiple objects, so I tried grabbing the alliance data. It worked as well.
+    std::shared_ptr<NetworkTable> table2 = NetworkTable::GetTable("FMSInfo");
+    
+    alliance = table2->GetEntry("IsRedAlliance");
+    
+    frc::SmartDashboard::PutBoolean("Red Alliance?",alliance.GetBoolean(false));
+
+  
+
+
+
+    
     m_robotDrive.DriveCartesian(m_stick.GetX(), m_stick.GetY(), m_stick.GetZ());
   }
 
@@ -70,6 +94,8 @@ class Robot : public frc::TimedRobot {
   frc::Joystick m_stick{kJoystickChannel};
   nt::NetworkTableEntry xEntry;
   nt::NetworkTableEntry yEntry;
+  nt::NetworkTableEntry alliance;
+  nt::NetworkTableEntry targetX;
 
 };
 
